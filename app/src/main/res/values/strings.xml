@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GitHub App</string>
+    <string name="title_home">Home</string>
+    <string name="title_search">Search</string>
+    <string name="title_profile">Profile</string>
+    <string name="title_settings">Settings</string>
+    
+    <!-- Authentication -->
+    <string name="sign_in_with_github">Sign in with GitHub</string>
+    <string name="signing_in">Signing in...</string>
+    <string name="sign_out">Sign out</string>
+    
+    <!-- Search -->
+    <string name="search_repositories">Search repositories</string>
+    <string name="search_hint">Search GitHub repositories...</string>
+    <string name="no_results">No repositories found</string>
+    <string name="loading">Loading...</string>
+    
+    <!-- Repository -->
+    <string name="repository_details">Repository Details</string>
+    <string name="stars">%d stars</string>
+    <string name="forks">%d forks</string>
+    <string name="language">Language: %s</string>
+    <string name="description">Description</string>
+    <string name="readme">README</string>
+    
+    <!-- Profile -->
+    <string name="user_profile">User Profile</string>
+    <string name="followers">%d followers</string>
+    <string name="following">%d following</string>
+    <string name="public_repos">%d repositories</string>
+    
+    <!-- Issues -->
+    <string name="issues">Issues</string>
+    <string name="open_issues">%d open</string>
+    <string name="closed_issues">%d closed</string>
+    
+    <!-- Error messages -->
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="error_unknown">An unexpected error occurred.</string>
+    <string name="retry">Retry</string>
+    
+    <!-- Content descriptions -->
+    <string name="content_description_back">Back</string>
+    <string name="content_description_search">Search</string>
+    <string name="content_description_avatar">User avatar</string>
+    <string name="content_description_star">Star</string>
+    <string name="content_description_fork">Fork</string>
+</resources>

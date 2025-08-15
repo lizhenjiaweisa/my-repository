@@ -1,0 +1,15 @@
+# This file contains machine-specific paths for the Android SDK
+# Copy this file to local.properties and update the paths for your system
+
+# Windows
+sdk.dir=C\:\\Users\\[USERNAME]\\AppData\\Local\\Android\\Sdk
+
+# MacOS
+# sdk.dir=/Users/[USERNAME]/Library/Android/sdk
+
+# Linux
+# sdk.dir=/home/[USERNAME]/Android/Sdk
+
+# GitHub OAuth credentials (replace with your actual values)
+github_client_id=Ov23ligjWZEJho14iytJ
+github_client_secret=bde22c16d092ca9834fc1dbee10b7d18bf5f51f8

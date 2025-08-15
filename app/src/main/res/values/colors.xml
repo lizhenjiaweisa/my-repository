@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors -->
+    <color name="primary">#0969DA</color>
+    <color name="primary_dark">#0550AE</color>
+    <color name="primary_light">#79C0FF</color>
+    
+    <!-- Secondary Colors -->
+    <color name="secondary">#1F883D</color>
+    <color name="secondary_dark">#116329</color>
+    <color name="secondary_light">#4AC26D</color>
+    
+    <!-- Background Colors -->
+    <color name="background">#FFFFFF</color>
+    <color name="background_dark">#0D1117</color>
+    <color name="surface">#F6F8FA</color>
+    <color name="surface_dark">#161B22</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#24292F</color>
+    <color name="text_secondary">#656D76</color>
+    <color name="text_disabled">#8C959F</color>
+    <color name="text_primary_dark">#F0F6FC</color>
+    <color name="text_secondary_dark">#7D8590</color>
+    
+    <!-- Semantic Colors -->
+    <color name="error">#D1242F</color>
+    <color name="warning">#BF8700</color>
+    <color name="success">#1A7F37</color>
+    <color name="info">#0969DA</color>
+    
+    <!-- Border Colors -->
+    <color name="border">#D0D7DE</color>
+    <color name="border_dark">#30363D</color>
+    
+    <!-- GitHub Specific -->
+    <color name="github_black">#24292F</color>
+    <color name="github_white">#FFFFFF</color>
+    <color name="github_gray">#6A737D</color>
+    <color name="github_blue">#0969DA</color>
+    <color name="github_green">#2DA44E</color>
+    <color name="github_red">#D1242F</color>
+    <color name="github_yellow">#BF8700</color>
+</resources>
