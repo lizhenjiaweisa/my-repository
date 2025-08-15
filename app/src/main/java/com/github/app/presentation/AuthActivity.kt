@@ -2,11 +2,13 @@ package com.github.app.presentation
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -14,6 +16,7 @@ import androidx.compose.ui.Modifier
 import com.github.app.BuildConfig
 import com.github.app.presentation.screen.AuthScreen
 import com.github.app.presentation.theme.GitHubAppTheme
+import com.github.app.presentation.viewmodel.AuthViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.qualifiers.ApplicationContext
 import net.openid.appauth.AuthorizationException
@@ -22,7 +25,11 @@ import net.openid.appauth.AuthorizationResponse
 import net.openid.appauth.AuthorizationService
 import net.openid.appauth.AuthorizationServiceConfiguration
 import net.openid.appauth.ResponseTypeValues
+import net.openid.appauth.TokenRequest
+import java.security.MessageDigest
+import java.util.Base64
 import javax.inject.Inject
+import kotlin.getValue
 
 @AndroidEntryPoint
 class AuthActivity : ComponentActivity() {
@@ -30,13 +37,20 @@ class AuthActivity : ComponentActivity() {
     companion object {
         private const val RC_AUTH = 1001
         private const val TAG = "AuthActivity"
+        private const val PREFS_NAME = "github_auth_prefs"
+        private const val KEY_CODE_VERIFIER = "code_verifier"
     }
 
+    private var authService: AuthorizationService? = null
+
     @Inject
-    lateinit var authService: AuthorizationService
+    lateinit var sharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // 初始化AuthorizationService
+        authService = AuthorizationService(this)
         
         Log.d(TAG, "onCreate called with intent: ${intent?.data}")
         Log.d(TAG, "Action: ${intent?.action}")
@@ -116,14 +130,15 @@ class AuthActivity : ComponentActivity() {
             if (code != null) {
                 Log.d(TAG, "Authorization code received from deep link: $code")
                 
-                val resultIntent = Intent().apply {
-                    putExtra("auth_code", code)
+                // 获取保存的code_verifier用于PKCE校验
+                val codeVerifier = sharedPreferences.getString(KEY_CODE_VERIFIER, null)
+                if (codeVerifier != null) {
+                    exchangeCodeForToken(code, codeVerifier)
+                } else {
+                    Log.e(TAG, "Code verifier not found for PKCE")
+                    setResult(RESULT_CANCELED)
+                    finish()
                 }
-                Log.d(TAG, "11111111111111111111111111")
-                setResult(RESULT_OK, resultIntent)
-                Log.d(TAG, "222222222222222222222")
-                finish()
-                Log.d(TAG, "3333333333333333333")
             } else {
                 Log.w(TAG, "No authorization code found in deep link")
                 setResult(RESULT_CANCELED)
@@ -146,6 +161,17 @@ class AuthActivity : ComponentActivity() {
             Uri.parse("https://github.com/login/oauth/authorize"),
             Uri.parse("https://github.com/login/oauth/access_token")
         )
+        
+        // 生成PKCE参数 - 使用符合规范的长度
+        val codeVerifier = generateCodeVerifier(43)  // 最小长度43，最大128
+        val codeChallenge = generateCodeChallenge(codeVerifier)
+        
+        // 保存code_verifier用于后续token交换
+        sharedPreferences.edit()
+            .putString(KEY_CODE_VERIFIER, codeVerifier)
+            .apply()
+        
+        Log.d(TAG, "PKCE code verifier generated and saved")
 
         val request = AuthorizationRequest.Builder(
             serviceConfig,
@@ -154,11 +180,18 @@ class AuthActivity : ComponentActivity() {
             Uri.parse("githubapp://oauth/callback")
         )
             .setScope("repo user")
+            .setCodeVerifier(codeVerifier, codeChallenge, "S256")
             .build()
 
-        Log.d(TAG, "Authorization request built: ${request.jsonSerializeString()}")
-        val authIntent = authService.getAuthorizationRequestIntent(request)
-        startActivityForResult(authIntent, RC_AUTH)
+        Log.d(TAG, "Authorization request built with PKCE: ${request.jsonSerializeString()}")
+        authService?.let { service ->
+            val authIntent = service.getAuthorizationRequestIntent(request)
+            startActivityForResult(authIntent, RC_AUTH)
+        } ?: run {
+            Log.e(TAG, "AuthorizationService is null")
+            setResult(RESULT_CANCELED)
+            finish()
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -184,12 +217,15 @@ class AuthActivity : ComponentActivity() {
             val code = response.authorizationCode
             Log.d(TAG, "Authorization code received: $code")
             
-            val resultIntent = Intent().apply {
-                putExtra("auth_code", code)
+            // 获取保存的code_verifier用于PKCE校验
+            val codeVerifier = sharedPreferences.getString(KEY_CODE_VERIFIER, null)
+            if (codeVerifier != null) {
+                exchangeCodeForToken(code!!, codeVerifier)
+            } else {
+                Log.e(TAG, "Code verifier not found for PKCE")
+                setResult(RESULT_CANCELED)
+                finish()
             }
-            setResult(RESULT_OK, resultIntent)
-            Log.d(TAG, "Setting RESULT_OK with auth code")
-            finish()
         } else if (exception != null) {
             Log.e(TAG, "Authorization error: ${exception.error}, ${exception.errorDescription}")
             
@@ -205,8 +241,72 @@ class AuthActivity : ComponentActivity() {
         }
     }
 
+    private fun exchangeCodeForToken(code: String, codeVerifier: String) {
+        Log.d(TAG, "Exchanging authorization code for access token with PKCE")
+        
+        val serviceConfig = AuthorizationServiceConfiguration(
+            Uri.parse("https://github.com/login/oauth/authorize"),
+            Uri.parse("https://github.com/login/oauth/access_token")
+        )
+        
+        val tokenRequest = TokenRequest.Builder(
+            serviceConfig,
+            BuildConfig.GITHUB_CLIENT_ID
+        )
+            .setAuthorizationCode(code)
+            .setRedirectUri(Uri.parse("githubapp://oauth/callback"))
+            .setCodeVerifier(codeVerifier)
+            .build()
+
+        authService?.performTokenRequest(tokenRequest) { response, exception ->
+            if (response != null) {
+                val accessToken = response.accessToken
+                Log.d(TAG, "Access token received successfully")
+                
+                // 清除保存的code_verifier
+                sharedPreferences.edit()
+                    .remove(KEY_CODE_VERIFIER)
+                    .apply()
+                
+                val resultIntent = Intent().apply {
+                    putExtra("access_token", accessToken)
+                    putExtra("token_type", response.tokenType)
+                    putExtra("scope", response.scope)
+                }
+                setResult(RESULT_OK, resultIntent)
+                finish()
+            } else {
+                Log.e(TAG, "Token exchange failed: ${exception?.errorDescription}")
+                val resultIntent = Intent().apply {
+                    putExtra("error_message", exception?.errorDescription ?: "Token exchange failed")
+                }
+                setResult(RESULT_CANCELED, resultIntent)
+                finish()
+            }
+        } ?: run {
+            Log.e(TAG, "AuthorizationService is null during token exchange")
+            setResult(RESULT_CANCELED)
+            finish()
+        }
+    }
+
+    fun generateCodeVerifier(length: Int): String {
+        // PKCE规范要求长度在43-128之间
+        val validLength = length.coerceIn(43, 128)
+        val bytes = ByteArray(validLength)
+        kotlin.random.Random.nextBytes(bytes)
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+    }
+
+    // Step 2: Generate the code challenge from the code verifier
+    fun generateCodeChallenge(codeVerifier: String): String {
+        val hashBytes = MessageDigest.getInstance("SHA-256").digest(codeVerifier.toByteArray())
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(hashBytes)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        authService.dispose()
+        authService?.dispose()
+        authService = null
     }
 }

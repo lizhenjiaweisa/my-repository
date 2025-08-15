@@ -57,25 +57,14 @@ class AuthViewModel @Inject constructor(
     fun exchangeCodeForToken(code: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
-            
-            authRepository.exchangeCodeForToken(code)
-                .onSuccess { token ->
-                    Log.d("lzj", "exchangeCodeForToken: $token")
-                    authRepository.saveAuthToken(token)
-                    _isLoggedIn.value = true
-                    loadAuthenticatedUser()
-                    Log.d("lzj", "exchangeCodeForToken: 2222222222222222")
-                }
-                .onFailure { error ->
-                    Log.d("lzj", "exchangeCodeForToken: ${error.message}")
-                    _authState.value = AuthState.Error(error.message ?: "Authentication failed")
-                }
+            Log.d("lzj", "exchangeCodeForToken: $code")
+            authRepository.saveAuthToken(code)
+            _isLoggedIn.value = true
+            loadAuthenticatedUser()
+            Log.d("lzj", "exchangeCodeForToken: 2222222222222222")
         }
     }
 
-    fun handleAuthCallback(code: String) {
-        exchangeCodeForToken(code)
-    }
 
     private suspend fun loadAuthenticatedUser() {
         authRepository.getAuthenticatedUser()

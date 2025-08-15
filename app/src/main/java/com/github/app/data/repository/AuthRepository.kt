@@ -72,23 +72,29 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    fun getAuthorizationRequest(): AuthorizationRequest {
+    fun getAuthorizationRequest(codeVerifier: String? = null): AuthorizationRequest {
         val serviceConfig = AuthorizationServiceConfiguration(
             Uri.parse("https://github.com/login/oauth/authorize"),
             Uri.parse("https://github.com/login/oauth/access_token")
         )
 
-        return AuthorizationRequest.Builder(
+        val builder = AuthorizationRequest.Builder(
             serviceConfig,
             BuildConfig.GITHUB_CLIENT_ID,
             ResponseTypeValues.CODE,
             Uri.parse("githubapp://oauth/callback")
-        )
-            .setScope("repo user")
-            .build()
+        ).setScope("repo user")
+
+        // 如果提供了codeVerifier，添加PKCE支持
+        codeVerifier?.let {
+            val codeChallenge = generateCodeChallenge(it)
+            builder.setCodeVerifier(it, codeChallenge, "S256")
+        }
+
+        return builder.build()
     }
 
-    suspend fun exchangeCodeForToken(code: String): Result<String> {
+    suspend fun exchangeCodeForToken(code: String, codeVerifier: String? = null): Result<String> {
         return try {
             // 创建临时的Retrofit实例用于OAuth交换
             val okHttpClient = OkHttpClient.Builder()
@@ -105,11 +111,21 @@ class AuthRepository @Inject constructor(
 
             val gitHubAuthService = retrofit.create(GitHubAuthService::class.java)
             
-            val response = gitHubAuthService.exchangeCodeForToken(
-                clientId = BuildConfig.GITHUB_CLIENT_ID,
-                clientSecret = BuildConfig.GITHUB_CLIENT_SECRET,
-                code = code
-            )
+            val response = if (codeVerifier != null) {
+                // 使用PKCE的token交换
+                gitHubAuthService.exchangeCodeForTokenWithPKCE(
+                    clientId = BuildConfig.GITHUB_CLIENT_ID,
+                    code = code,
+                    codeVerifier = codeVerifier
+                )
+            } else {
+                // 传统的token交换（向后兼容）
+                gitHubAuthService.exchangeCodeForToken(
+                    clientId = BuildConfig.GITHUB_CLIENT_ID,
+                    clientSecret = BuildConfig.GITHUB_CLIENT_SECRET,
+                    code = code
+                )
+            }
             
             if (response.isSuccessful) {
                 response.body()?.accessToken?.let { token ->
@@ -132,7 +148,19 @@ class AuthRepository @Inject constructor(
         return intent
     }
 
-    // TODO
+    // 生成PKCE code verifier的工具方法
+    fun generateCodeVerifier(length: Int): String {
+        val bytes = ByteArray(length)
+        kotlin.random.Random.nextBytes(bytes)
+        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+    }
+
+    // 生成PKCE code challenge的工具方法
+    fun generateCodeChallenge(codeVerifier: String): String {
+        val hashBytes = java.security.MessageDigest.getInstance("SHA-256").digest(codeVerifier.toByteArray())
+        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(hashBytes)
+    }
+
     suspend fun isLoggedIn(): Flow<Boolean> {
         return authState.map { it != null }
     }

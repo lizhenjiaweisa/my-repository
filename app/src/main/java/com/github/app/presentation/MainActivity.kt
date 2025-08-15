@@ -30,11 +30,13 @@ class MainActivity : ComponentActivity() {
         Log.d("MainActivity", "Auth result received: resultCode=${result.resultCode}")
         
         if (result.resultCode == RESULT_OK) {
-            val authCode = result.data?.getStringExtra("auth_code")
-            Log.d("MainActivity", "Auth code received: $authCode")
+            val access_token = result.data?.getStringExtra("access_token")
+            val token_type = result.data?.getStringExtra("token_type")
+            val scope = result.data?.getStringExtra("scope")
+            Log.d("MainActivity", "Auth code received: $access_token $token_type $scope")
             
-            if (authCode != null) {
-                authViewModel.exchangeCodeForToken(authCode)
+            if (access_token != null) {
+                authViewModel.exchangeCodeForToken(access_token)
             } else {
                 Log.w("MainActivity", "No auth code found in result")
                 authViewModel.setAuthError("No authorization code received")
@@ -69,7 +71,11 @@ class MainActivity : ComponentActivity() {
 
 
     fun launchAuthActivity() {
-        val intent = authViewModel.getAuthorizationIntent(this)
-        authLauncher.launch(intent)
+        try {
+            val intent = authViewModel.getAuthorizationIntent(this)
+            authLauncher.launch(intent)
+        } catch (e: Exception) {
+
+        }
     }
 }

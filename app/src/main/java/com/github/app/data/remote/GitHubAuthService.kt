@@ -14,4 +14,12 @@ interface GitHubAuthService {
         @Field("client_secret") clientSecret: String,
         @Field("code") code: String
     ): Response<AccessTokenResponse>
+
+    @POST("login/oauth/access_token")
+    @FormUrlEncoded
+    suspend fun exchangeCodeForTokenWithPKCE(
+        @Field("client_id") clientId: String,
+        @Field("code") code: String,
+        @Field("code_verifier") codeVerifier: String
+    ): Response<AccessTokenResponse>
 }
