@@ -57,7 +57,7 @@ fun HomeScreen(
                         Icon(Icons.Default.Search, contentDescription = "Search")
                     }
                     IconButton(onClick = onAuthClick) {
-                        Icon(Icons.Default.Login, contentDescription = "Sign in to GitHub")
+                        Icon(Icons.Default.Person, contentDescription = "Sign in to GitHub")
                     }
                 }
             )
