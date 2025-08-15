@@ -110,7 +110,15 @@ fun AuthScreen(
                     onCancel = onCancel
                 )
                 }
-                AuthState.LoggedOut -> TODO()
+                AuthState.LoggedOut -> {
+                    AuthPrompt(
+                        onLoginClick = {
+                            val mainActivity = context as MainActivity
+                            mainActivity.launchAuthActivity()
+                        },
+                        onCancel = onCancel
+                    )
+                }
             }
         }
     }

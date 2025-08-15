@@ -1,5 +1,6 @@
 package com.github.app.presentation.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.app.data.model.Repository
@@ -57,9 +58,11 @@ class UserViewModel @Inject constructor(
             
             repository.getUserRepositories(username)
                 .onSuccess { repositories ->
+                    Log.d("lzj", "loadUserRepositories: success")
                     _userRepositories.value = UserRepositoriesState.Success(repositories)
                 }
                 .onFailure { error ->
+                    Log.d("lzj", "loadUserRepositories: error ${error.message}")
                     _userRepositories.value = UserRepositoriesState.Error(error.message ?: "Failed to load repositories")
                 }
         }

@@ -48,7 +48,6 @@ class GitHubRepository @Inject constructor(
     suspend fun getTrendingRepositories(page: Int = 1): Result<RepositorySearchResponse> {
         return withContext(Dispatchers.IO) {
             try {
-                // TODO 参数带定
                 val response = apiService.getTrendingRepositories()
                 if (response.isSuccessful) {
                     response.body()?.let { Result.success(it) }
@@ -83,10 +82,10 @@ class GitHubRepository @Inject constructor(
             try {
                 val response = if (username == null) {
                     // Get authenticated user's repositories
-                    apiService.getUserRepositories()
+                    apiService.getUserPublicRepositories(username ?: "")
                 } else {
                     // Get specific user's repositories
-                    apiService.getUserRepositories()
+                    apiService.getUserPublicRepositories(username)
                 }
 
                 if (response.isSuccessful) {

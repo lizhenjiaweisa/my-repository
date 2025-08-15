@@ -110,8 +110,8 @@ fun UserProfileScreen(
                         )
                     }
                     
-                    when (userState) {
-                        is UserState.Loading -> {
+                    when (userRepositoriesState) {
+                        is UserRepositoriesState.Loading -> {
                             item {
                                 Box(
                                     modifier = Modifier
@@ -123,7 +123,7 @@ fun UserProfileScreen(
                                 }
                             }
                         }
-                        is UserState.Error -> {
+                        is UserRepositoriesState.Error -> {
                             item {
                                 Box(
                                     modifier = Modifier
@@ -135,7 +135,7 @@ fun UserProfileScreen(
                                 }
                             }
                         }
-                        is UserState.Success -> {
+                        is UserRepositoriesState.Success -> {
                             val repositories = (userRepositoriesState as UserRepositoriesState.Success).repositories
                             items(repositories) { repository ->
                                 RepositoryCard(
@@ -147,7 +147,7 @@ fun UserProfileScreen(
                                 )
                             }
                         }
-                        UserState.Idle -> {
+                        UserRepositoriesState.Idle -> {
                             // Do nothing
                         }
                     }
@@ -290,8 +290,58 @@ private fun UserLinks(user: User) {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-        ){
-            // TODO 界面待定
+                .padding(horizontal = 16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Links",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                
+                user.email?.takeIf { it.isNotEmpty() }?.let { email ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = "Email",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = email,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                
+                user.blog?.takeIf { it.isNotEmpty() }?.let { blog ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Link,
+                            contentDescription = "Blog",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = blog,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
         }
     }
 }

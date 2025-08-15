@@ -48,6 +48,16 @@ interface GitHubApiService {
         @Query("per_page") perPage: Int = 30
     ): Response<List<Repository>>
 
+    @GET("users/{username}/repos")
+    suspend fun getUserPublicRepositories(
+        @Path("username") username: String,
+        @Query("type") type: String = "owner",
+        @Query("sort") sort: String = "updated",
+        @Query("direction") direction: String = "desc",
+        @Query("page") page: Int = 1,
+        @Query("per_page") perPage: Int = 30
+    ): Response<List<Repository>>
+
     // Issue endpoints
     @GET("repos/{owner}/{repo}/issues")
     suspend fun getRepositoryIssues(

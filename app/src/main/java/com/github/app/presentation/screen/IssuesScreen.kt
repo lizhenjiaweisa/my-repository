@@ -26,7 +26,6 @@ fun IssuesScreen(
     onCreateIssue: () -> Unit,
     viewModel: IssueViewModel = hiltViewModel()
 ) {
-    // TODO
     val issuesState by viewModel.issues.collectAsState()
 
     LaunchedEffect(owner, repoName) {

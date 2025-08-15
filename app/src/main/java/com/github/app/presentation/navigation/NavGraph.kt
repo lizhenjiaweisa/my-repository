@@ -102,8 +102,7 @@ fun GitHubNavGraph(
                 repoName = repo,
                 onBackClick = { navController.popBackStack() },
                 onCreateIssue = {
-                    // TODO
-//                    navController.navigate(Screen.CreateIssue.createRoute(repoOwner, repoName))
+                    navController.navigate(Screen.CreateIssue.createRoute(owner, repo))
                 }
             )
         }
